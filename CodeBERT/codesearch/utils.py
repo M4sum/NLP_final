@@ -118,9 +118,6 @@ class CodesearchProcessor(DataProcessor):
         """Creates examples for the training and dev sets."""
         examples = []
         for (i, line) in enumerate(lines):
-            print("******************")
-            print(line)
-            # break
             guid = "%s-%s" % (set_type, i)
             text_a = line[3]
             text_b = line[4]
@@ -130,6 +127,8 @@ class CodesearchProcessor(DataProcessor):
                 label = line[0]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+            print(guid, "\ntext_a: ", text_a, "\ntext_b: ", text_b, "\nlabel: ", label)
+            break
         if (set_type == 'test'):
             return examples, lines
         else:
