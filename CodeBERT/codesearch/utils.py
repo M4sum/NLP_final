@@ -93,6 +93,8 @@ class CodesearchProcessor(DataProcessor):
     def get_train_examples(self, data_dir, train_file):
         """See base class."""
         logger.info("LOOKING AT {}".format(os.path.join(data_dir, train_file)))
+        print("######################")
+        print(data_dir, train_file)
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, train_file)), "train")
 
@@ -116,6 +118,9 @@ class CodesearchProcessor(DataProcessor):
         """Creates examples for the training and dev sets."""
         examples = []
         for (i, line) in enumerate(lines):
+            print("******************")
+            print(line)
+            # break
             guid = "%s-%s" % (set_type, i)
             text_a = line[3]
             text_b = line[4]
@@ -241,6 +246,9 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
                           input_mask=input_mask,
                           segment_ids=segment_ids,
                           label_id=label_id))
+        if ex_index % 200000 == 0:
+            break
+    print(features[0].input_mask)
     return features
 
 

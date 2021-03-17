@@ -1,0 +1,91 @@
+{
+    'repo': 'celiao/tmdbsimple',
+    'path': 'tmdbsimple/base.py',
+    'func_name': 'TMDB._set_attrs_to_values',
+    'original_string': 'def _set_attrs_to_values(self, response={}):\n        """\n        Set attributes to dictionary values.\n\n        - e.g.\n        >>> import tmdbsimple as tmdb\n        >>> movie = tmdb.Movies(103332)\n        >>> response = movie.info()\n        >>> movie.title  # instead of response[\'title\']\n        """\n        if isinstance(response, dict):\n            for key in response.keys():\n                if not hasattr(self, key) or not callable(getattr(self, key)):\n                    setattr(self, key, response[key])',
+    'language': 'python',
+    'code': 'def _set_attrs_to_values(self, response={}):\n        """\n        Set attributes to dictionary values.\n\n        - e.g.\n        >>> import tmdbsimple as tmdb\n        >>> movie = tmdb.Movies(103332)\n        >>> response = movie.info()\n        >>> movie.title  # instead of response[\'title\']\n        """\n        if isinstance(response, dict):\n            for key in response.keys():\n                if not hasattr(self, key) or not callable(getattr(self, key)):\n                    setattr(self, key, response[key])',
+    'code_tokens': ['def', '_set_attrs_to_values', '(', 'self', ',', 'response', '=', '{', '}', ')', ':', 'if', 'isinstance', '(', 'response', ',', 'dict', ')', ':', 'for', 'key', 'in', 'response', '.', 'keys', '(', ')', ':', 'if', 'not', 'hasattr', '(', 'self', ',', 'key', ')', 'or', 'not', 'callable', '(', 'getattr', '(', 'self', ',', 'key', ')', ')', ':', 'setattr', '(', 'self', ',', 'key', ',', 'response', '[', 'key', ']', ')'],
+    'docstring': "Set attributes to dictionary values.\n\n        - e.g.\n        >>> import tmdbsimple as tmdb\n        >>> movie = tmdb.Movies(103332)\n        >>> response = movie.info()\n        >>> movie.title  # instead of response['title']",
+    'docstring_tokens': ['Set', 'attributes', 'to', 'dictionary', 'values', '.'],
+    'sha': 'ff17893110c99771d6398a62c35d36dd9735f4b9',
+    'url': 'https://github.com/celiao/tmdbsimple/blob/ff17893110c99771d6398a62c35d36dd9735f4b9/tmdbsimple/base.py#L93-L106',
+    'partition': 'test'
+}
+
+
+Comment, Fuckers ##### Data CodeBERT uses for training
+0
+<CODESPLIT>https://github.com/trailofbits/manticore/blob/54c5a15b1119c523ae54c09972413e8b97f11629/manticore/native/cpu/arm.py#L197-L203
+<CODESPLIT>EVMWorld.start_transaction
+<CODESPLIT>Manually compute the carry bit produced by expanding an immediate operand ( see ARMExpandImm_C )
+<CODESPLIT>def start_transaction ( self , sort , address , price = None , data = None , caller = None , value = 0 , gas = 2300 ) : assert self . _pending_transaction is None , "Already started tx" self . _pending_transaction = PendingTransaction ( sort , address , price , data , caller , value , gas )
+
+0
+<CODESPLIT>https://github.com/ioam/lancet/blob/1fbbf88fa0e8974ff9ed462e3cb11722ddebdd6e/lancet/core.py#L745-L758
+<CODESPLIT>Log.write_log
+<CODESPLIT>Load all the files in a given directory selecting only files with the given extension if specified . The given kwargs are passed through to the normal constructor .
+<CODESPLIT>def write_log ( log_path , data , allow_append = True ) : append = os . path . isfile ( log_path ) islist = isinstance ( data , list ) if append and not allow_append : raise Exception ( 'Appending has been disabled' ' and file %s exists' % log_path ) if not ( islist or isinstance ( data , Args ) ) : raise Exception ( 'Can only write Args objects or dictionary' ' lists to log file.' ) specs = data if islist else data . specs if not all ( isinstance ( el , dict ) for el in specs ) : raise Exception ( 'List elements must be dictionaries.' ) log_file = open ( log_path , 'r+' ) if append else open ( log_path , 'w' ) start = int ( log_file . readlines ( ) [ - 1 ] . split ( ) [ 0 ] ) + 1 if append else 0 ascending_indices = range ( start , start + len ( data ) ) log_str = '\n' . join ( [ '%d %s' % ( tid , json . dumps ( el ) ) for ( tid , el ) in zip ( ascending_indices , specs ) ] ) log_file . write ( "\n" + log_str if append else log_str ) log_file . close ( )
+
+Comment, Fuckers ##### Data from parallel corpus. The one we use.
+
+@frappe.whitelist() 
+def setup_complete(args):
+
+'''
+Calls hooks for `setup_wizard_complete`, sets home page as `desktop` 
+and clears cache. If wizard breaks, calls `setup_wizard_exception` hook
+'''
+
+    if cint(frappe.db.get_single_value(u'System Settings', u'setup_complete')): 
+         return 
+    args = process_args(args) 
+    try: 
+         if (args.language and (args.language != u'english')): 
+              set_default_language(get_language_code(args.lang)) 
+         frappe.clear_cache() 
+         update_system_settings(args) 
+         update_user_name(args) 
+         for method in frappe.get_hooks(u'setup_wizard_complete'): 
+              frappe.get_attr(method)(args) 
+         disable_future_access() 
+         frappe.db.commit() 
+         frappe.clear_cache() 
+    except: 
+         frappe.db.rollback() 
+         if args: 
+              traceback = frappe.get_traceback() 
+              for hook in frappe.get_hooks(u'setup_wizard_exception'): 
+                   frappe.get_attr(hook)(traceback, args) 
+         raise 
+    else: 
+         for hook in frappe.get_hooks(u'setup_wizard_success'): 
+              frappe.get_attr(hook)(args)
+
+##### Some shit
+['1', 
+'https://github.com/rosenbrockc/acorn/blob/9a44d1a1ad8bfc2c54a6b56d9efe54433a797820/acorn/ipython.py#L201-L256', 
+'InteractiveDecorator._logdef', 
+'Logs the definition of the object that was just auto - decorated inside the ipython notebook .', 
+'def _logdef ( self , n , o , otype ) : import re try : #The latest input cell will be the one that this got executed #from. TODO: actually, if acorn got imported after the fact, then #the import would have caused all the undecorated functions to be #decorated as soon as acorn imported. I suppose we just won\'t have #any code for that case. if otype == "classes" : cellno = max ( [ int ( k [ 2 : ] ) for k in self . shell . user_ns . keys ( ) if re . match ( "_i\\d+" , k ) ] ) elif otype == "functions" : cellno = int ( o . __code__ . co_filename . strip ( "<>" ) . split ( \'-\' ) [ 2 ] ) except : #This must not have been an ipython notebook declaration, so we #don\'t store the code. cellno = None pass code = "" if cellno is not None : cellstr = "_i{0:d}" . format ( cellno ) if cellstr in self . shell . user_ns : cellcode = self . shell . user_ns [ cellstr ] import ast astm = ast . parse ( cellcode ) ab = astm . body parts = { ab [ i ] . name : ( ab [ i ] . lineno , None if i + 1 >= len ( ab ) else ab [ i + 1 ] . lineno ) for i , d in enumerate ( ab ) } if n in parts : celllines = cellcode . split ( \'\\n\' ) start , end = parts [ n ] if end is not None : code = celllines [ start - 1 : end - 1 ] else : code = celllines [ start - 1 : ] #Now, we actually create the entry. Since the execution for function #definitions is almost instantaneous, we just log the pre and post #events at the same time. from time import time from acorn . logging . database import record entry = { "m" : "def" , "a" : None , "s" : time ( ) , "r" : None , "c" : code , } from acorn import msg record ( "__main__.{}" . format ( n ) , entry , diff = True ) msg . info ( entry , 1 )']
+
+##### Code to run run_classifier file from codeBERT
+
+python3 run_classifier.py \
+--model_type roberta \
+--task_name codesearch \
+--do_train \
+--do_eval \
+--eval_all_checkpoints \
+--train_file train.txt \
+--dev_file valid.txt \
+--max_seq_length 200 \
+--per_gpu_train_batch_size 32 \
+--per_gpu_eval_batch_size 32 \
+--learning_rate 1e-5 \
+--num_train_epochs 8 \
+--gradient_accumulation_steps 1 \
+--overwrite_output_dir \
+--data_dir ../data/codesearch/train_valid/python \
+--output_dir ./models/python  \
+--model_name_or_path roberta

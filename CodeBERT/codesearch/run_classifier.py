@@ -32,7 +32,8 @@ from tqdm import tqdm, trange
 from transformers import (WEIGHTS_NAME, get_linear_schedule_with_warmup, AdamW,
                           RobertaConfig,
                           RobertaForSequenceClassification,
-                          RobertaTokenizer)
+                          RobertaTokenizer,
+                          AutoTokenizer, AutoModel)
 
 from utils import (compute_metrics, convert_examples_to_features,
                         output_modes, processors)
@@ -298,34 +299,34 @@ def load_and_cache_examples(args, task, tokenizer, ttype='train'):
         str(task)))
 
     # if os.path.exists(cached_features_file):
-    try:
-        logger.info("Loading features from cached file %s", cached_features_file)
-        features = torch.load(cached_features_file)
-        if ttype == 'test':
-            examples, instances = processor.get_test_examples(args.data_dir, args.test_file)
-    except:
-        logger.info("Creating features from dataset file at %s", args.data_dir)
-        label_list = processor.get_labels()
-        if ttype == 'train':
-            examples = processor.get_train_examples(args.data_dir, args.train_file)
-        elif ttype == 'dev':
-            examples = processor.get_dev_examples(args.data_dir, args.dev_file)
-        elif ttype == 'test':
-            examples, instances = processor.get_test_examples(args.data_dir, args.test_file)
-
-        features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
-                                                cls_token_at_end=bool(args.model_type in ['xlnet']),
-                                                # xlnet has a cls token at the end
-                                                cls_token=tokenizer.cls_token,
-                                                sep_token=tokenizer.sep_token,
-                                                cls_token_segment_id=2 if args.model_type in ['xlnet'] else 1,
-                                                pad_on_left=bool(args.model_type in ['xlnet']),
-                                                # pad on the left for xlnet
-                                                pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
-        if args.local_rank in [-1, 0]:
-            logger.info("Saving features into cached file %s", cached_features_file)
-            torch.save(features, cached_features_file)
+    # try:
+    #     logger.info("Loading features from cached file %s", cached_features_file)
+    #     features = torch.load(cached_features_file)
+    #     if ttype == 'test':
+    #         examples, instances = processor.get_test_examples(args.data_dir, args.test_file)
+    # except:
+    logger.info("Creating features from dataset file at %s", args.data_dir)
+    label_list = processor.get_labels()
+    if ttype == 'train':
+        examples = processor.get_train_examples(args.data_dir, args.train_file)
+    elif ttype == 'dev':
+        examples = processor.get_dev_examples(args.data_dir, args.dev_file)
+    elif ttype == 'test':
+        examples, instances = processor.get_test_examples(args.data_dir, args.test_file)
+    features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
+                                            cls_token_at_end=bool(args.model_type in ['xlnet']),
+                                            # xlnet has a cls token at the end
+                                            cls_token=tokenizer.cls_token,
+                                            sep_token=tokenizer.sep_token,
+                                            cls_token_segment_id=2 if args.model_type in ['xlnet'] else 1,
+                                            pad_on_left=bool(args.model_type in ['xlnet']),
+                                            # pad on the left for xlnet
+                                            pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
+    # if args.local_rank in [-1, 0]:
+    logger.info("Saving features into cached file %s", cached_features_file)
+    torch.save(features, cached_features_file)
     # Convert to Tensors and build dataset
+    # print(features)
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
     all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)
     all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
@@ -452,7 +453,7 @@ def main():
     args.device = device
 
     # Setup logging
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -  %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN)
     logger.warning("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s, 16-bits training: %s",
@@ -491,16 +492,22 @@ def main():
         logger.info("reload model from {}, resume from {} epoch".format(checkpoint_last, args.start_epoch))
 
     args.model_type = args.model_type.lower()
-    config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-    config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
-                                          num_labels=num_labels, finetuning_task=args.task_name)
+    # config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
+    # config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
+    #                                       num_labels=num_labels, finetuning_task=args.task_name)
     if args.tokenizer_name:
         tokenizer_name = args.tokenizer_name
     elif args.model_name_or_path:
         tokenizer_name = 'roberta-base'
-    tokenizer = tokenizer_class.from_pretrained(tokenizer_name, do_lower_case=args.do_lower_case)
-    model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool('.ckpt' in args.model_name_or_path),
-                                        config=config)
+
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/codebert-base")
+    model = AutoModel.from_pretrained("microsoft/codebert-base")
+    # tokenizer = tokenizer_class.from_pretrained(tokenizer_name, do_lower_case=args.do_lower_case)
+    # model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool('.ckpt' in args.model_name_or_path),
+                                        # config=config)
+    
+    # load_and_cache_examples(args, args.task_name, tokenizer, ttype='train')
+    # return
 
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
@@ -541,8 +548,11 @@ def main():
     # Training
     if args.do_train:
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, ttype='train')
-        global_step, tr_loss = train(args, train_dataset, model, tokenizer, optimizer)
-        logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
+        # global_step, tr_loss = train(args, train_dataset, model, tokenizer, optimizer)
+        # logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
+    
+    print(type(train_dataset))
+    return
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
     if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
